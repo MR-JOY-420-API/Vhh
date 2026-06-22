@@ -1,13 +1,13 @@
 const fs = require("fs-extra");
-const request = require("request");
 const moment = require("moment-timezone");
+const { createCanvas } = require("canvas");
 
 module.exports.config = {
   name: "uptime",
-  version: "1.0.5",
+  version: "2.0.0",
   permission: 0,
-  credits: Buffer.from("Sm95", "base64").toString(), // Joy
-  description: "Show bot uptime with image",
+  credits: "Joy Ahmed",
+  description: "Show bot uptime with generated image",
   prefix: true,
   category: "System",
   cooldowns: 1
@@ -16,53 +16,92 @@ module.exports.config = {
 module.exports.run = async function ({ api, event }) {
   const { threadID, messageID } = event;
 
-  // 🔐 Credit Protection
-  const expected = Buffer.from("Sm95", "base64").toString();
-  if (module.exports.config.credits !== expected) {
-    return api.sendMessage(
-      "❌ This command has been locked due to credit tampering.",
-      threadID,
-      messageID
-    );
-  }
-
-  // 🕒 Uptime calculation
   const uptime = process.uptime();
   const hours = Math.floor(uptime / 3600);
   const minutes = Math.floor((uptime % 3600) / 60);
   const seconds = Math.floor(uptime % 60);
-  const now = moment.tz("Asia/Dhaka").format("『D/MM/YYYY』 【hh:mm:ss A】");
+  const now = moment.tz("Asia/Dhaka").format("DD/MM/YYYY hh:mm:ss A");
 
-  // 📸 Google Drive Image
-  const imgPath = __dirname + "/cache/uptime.png";
-  const imgURL = "https://raw.githubusercontent.com/JUBAED-AHMED-JOY/Joy/main/joy404.png";
+  const width = 700;
+  const height = 380;
+  const canvas = createCanvas(width, height);
+  const ctx = canvas.getContext("2d");
 
-  const callback = () => {
-    const botName = global.config.BOTNAME || "YourBot";
+  const grad = ctx.createLinearGradient(0, 0, width, height);
+  grad.addColorStop(0, "#0f0c29");
+  grad.addColorStop(0.5, "#302b63");
+  grad.addColorStop(1, "#24243e");
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, width, height);
 
-    api.sendMessage(
-      {
-        body:
-          `🕘 𝗨𝗣𝗧𝗜𝗠𝗘 𝗥𝗘𝗣𝗢𝗥𝗧\n\n` +
-          `🤖 𝗕𝗢𝗧 𝗡𝗔𝗠𝗘: ${botName}\n` +
-          `📌 𝗣𝗥𝗘𝗙𝗜𝗫: ${global.config.PREFIX}\n` +
-          `🕒 𝗧𝗜𝗠𝗘 𝗡𝗢𝗪: ${now}\n\n` +
-          `✅ 𝗥𝗨𝗡𝗡𝗜𝗡𝗚:\n` +
-          `  ➤ ${hours} Hours\n` +
-          `  ➤ ${minutes} Minutes\n` +
-          `  ➤ ${seconds} Seconds\n\n` +
-          `👑 𝗢𝗪𝗡𝗘𝗥: 𝗝𝗢𝗬 𝗔𝗛𝗠𝗘𝗗\n` +
-          `🧠 𝗖𝗥𝗘𝗔𝗧𝗢𝗥: 𝗝𝗢𝗬 𝗔𝗛𝗠𝗘𝗗`,
-        attachment: fs.createReadStream(imgPath)
-      },
-      threadID,
-      () => fs.unlinkSync(imgPath),
-      messageID
-    );
-  };
+  ctx.strokeStyle = "#a855f7";
+  ctx.lineWidth = 3;
+  ctx.strokeRect(10, 10, width - 20, height - 20);
 
-  // 📥 Download image & send
-  return request(encodeURI(imgURL))
-    .pipe(fs.createWriteStream(imgPath))
-    .on("close", callback);
+  ctx.strokeStyle = "#7c3aed";
+  ctx.lineWidth = 1;
+  ctx.strokeRect(18, 18, width - 36, height - 36);
+
+  ctx.font = "bold 62px sans-serif";
+  ctx.textAlign = "center";
+  const titleGrad = ctx.createLinearGradient(0, 0, width, 0);
+  titleGrad.addColorStop(0, "#a855f7");
+  titleGrad.addColorStop(1, "#ec4899");
+  ctx.fillStyle = titleGrad;
+  ctx.fillText("JOY BOT", width / 2, 85);
+
+  ctx.font = "18px sans-serif";
+  ctx.fillStyle = "#c4b5fd";
+  ctx.fillText("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━", width / 2, 110);
+
+  ctx.textAlign = "left";
+  const left = 60;
+
+  ctx.font = "bold 22px sans-serif";
+  ctx.fillStyle = "#f0abfc";
+  ctx.fillText("⏱  UPTIME", left, 155);
+
+  ctx.font = "bold 42px sans-serif";
+  const uptimeGrad = ctx.createLinearGradient(left, 0, width - left, 0);
+  uptimeGrad.addColorStop(0, "#34d399");
+  uptimeGrad.addColorStop(1, "#06b6d4");
+  ctx.fillStyle = uptimeGrad;
+  ctx.fillText(`${String(hours).padStart(2,"0")}h  ${String(minutes).padStart(2,"0")}m  ${String(seconds).padStart(2,"0")}s`, left, 205);
+
+  ctx.font = "18px sans-serif";
+  ctx.fillStyle = "#94a3b8";
+  ctx.fillText(`🕐  ${now}`, left, 238);
+
+  ctx.font = "18px sans-serif";
+  ctx.fillStyle = "#c4b5fd";
+  ctx.textAlign = "center";
+  ctx.fillText("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━", width / 2, 265);
+
+  ctx.textAlign = "left";
+  ctx.font = "bold 22px sans-serif";
+  ctx.fillStyle = "#fbbf24";
+  ctx.fillText("👑  OWNER  :  JOY AHMED", left, 305);
+
+  ctx.font = "bold 18px sans-serif";
+  ctx.fillStyle = "#64748b";
+  ctx.fillText("🤖  PREFIX  :  " + (global.config?.PREFIX || "."), left, 338);
+
+  ctx.font = "16px sans-serif";
+  ctx.fillStyle = "#475569";
+  ctx.textAlign = "right";
+  ctx.fillText("powered by JOY BOT", width - 30, height - 20);
+
+  const imgPath = __dirname + "/cache/uptime_gen.png";
+  await fs.ensureDir(__dirname + "/cache");
+  const buffer = canvas.toBuffer("image/png");
+  fs.writeFileSync(imgPath, buffer);
+
+  api.sendMessage(
+    { attachment: fs.createReadStream(imgPath) },
+    threadID,
+    () => {
+      try { fs.unlinkSync(imgPath); } catch (_) {}
+    },
+    messageID
+  );
 };
